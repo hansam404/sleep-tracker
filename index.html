@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sleep Improvement Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f4f3ef;
+      --bg-tertiary: #eceae4;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border-tertiary: rgba(0,0,0,0.10);
+      --border-secondary: rgba(0,0,0,0.20);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --accent: #1D9E75;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a27;
+        --bg-tertiary: #333330;
+        --text-primary: #f0ede6;
+        --text-secondary: #a8a69e;
+        --text-tertiary: #6e6c66;
+        --border-tertiary: rgba(255,255,255,0.10);
+        --border-secondary: rgba(255,255,255,0.20);
+      }
+    }
+
+    body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 2rem; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 10px; }
+    .card { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 12px; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+    .metric { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px; text-align: center; }
+    .metric-val { font-size: 22px; font-weight: 500; }
+    .metric-lab { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .insight-box { border-left: 2.5px solid var(--accent); padding: 10px 14px; background: var(--bg-secondary); margin-bottom: 8px; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+    .insight-box.amber  { border-color: #EF9F27; }
+    .insight-box.blue   { border-color: #378ADD; }
+    .insight-box.purple { border-color: #7F77DD; }
+    .insight-title { font-size: 13px; font-weight: 500; }
+    .insight-body  { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+
+    .timeline { display: flex; flex-direction: column; }
+    .tl-row { display: flex; gap: 12px; align-items: flex-start; }
+    .tl-left { width: 56px; min-width: 56px; text-align: right; font-size: 12px; color: var(--text-secondary); padding-top: 3px; }
+    .tl-mid  { display: flex; flex-direction: column; align-items: center; }
+    .tl-dot  { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-primary); box-shadow: 0 0 0 1.5px var(--accent); flex-shrink: 0; margin-top: 4px; }
+    .tl-dot.muted { background: var(--border-secondary); box-shadow: 0 0 0 1.5px var(--border-secondary); }
+    .tl-line { width: 1.5px; background: var(--border-tertiary); flex: 1; min-height: 28px; }
+    .tl-content { padding-bottom: 20px; flex: 1; }
+    .tl-title { font-size: 14px; font-weight: 500; }
+    .tl-title.accent { color: var(--accent); }
+    .tl-desc  { font-size: 12px; color: var(--text-secondary); margin-top: 2px; line-height: 1.4; }
+
+    .checklist-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border-tertiary); cursor: pointer; user-select: none; }
+    .checklist-item:last-child { border-bottom: none; }
+    .check-box { width: 18px; height: 18px; min-width: 18px; border-radius: 4px; border: 1.5px solid var(--border-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 1px; }
+    .check-box.done { background: var(--accent); border-color: var(--accent); }
+    .check-tick { width: 10px; height: 7px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); display: none; }
+    .check-box.done .check-tick { display: block; }
+    .check-label { font-size: 14px; line-height: 1.4; transition: color 0.2s; }
+    .check-label.done { color: var(--text-tertiary); text-decoration: line-through; }
+    .check-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; margin-left: 6px; }
+    .tag-quality  { background: #E1F5EE; color: #0F6E56; }
+    .tag-screen   { background: rgba(250,199,117,0.25); color: #854F0B; }
+    .tag-schedule { background: #E6F1FB; color: #185FA5; }
+    .tag-stress   { background: #EEEDFE; color: #3C3489; }
+
+    @media (prefers-color-scheme: dark) {
+      .tag-quality  { background: #04342C; color: #5DCAA5; }
+      .tag-screen   { background: #412402; color: #EF9F27; }
+      .tag-schedule { background: #042C53; color: #85B7EB; }
+      .tag-stress   { background: #26215C; color: #AFA9EC; }
+    }
+
+    .progress-label { font-size: 13px; color: var(--text-secondary); margin: 10px 0 4px; }
+    .reset-btn { background: transparent; border: 0.5px solid var(--border-secondary); border-radius: var(--radius-md); color: var(--text-secondary); font-size: 13px; padding: 8px 16px; cursor: pointer; font-family: var(--font); transition: background 0.15s; margin-top: 4px; }
+    .reset-btn:hover { background: var(--bg-secondary); }
+    footer { text-align: center; font-size: 12px; color: var(--text-tertiary); margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Sleep Improvement Tracker</h1>
+  <p class="subtitle">Personalised for: unrefreshed sleep · late screens · irregular schedule · racing thoughts</p>
+
+  <p class="section-label">Tonight's score</p>
+  <div class="metric-row">
+    <div class="metric"><div class="metric-val" id="score-val">0%</div><div class="metric-lab">Score</div></div>
+    <div class="metric"><div class="metric-val" id="done-val">0 / 9</div><div class="metric-lab">Habits done</div></div>
+    <div class="metric"><div class="metric-val">3</div><div class="metric-lab">Issues found</div></div>
+  </div>
+
+  <p class="section-label" style="margin-top:4px;">Why you feel unrefreshed</p>
+  <div class="insight-box amber">
+    <div class="insight-title">Screen light suppresses deep sleep</div>
+    <div class="insight-body">Blue light delays melatonin by up to 3 hours — your body enters sleep but skips restorative slow-wave stages, causing the "slept 8 hrs, feel terrible" pattern.</div>
+  </div>
+  <div class="insight-box blue">
+    <div class="insight-title">Irregular schedule disrupts your circadian rhythm</div>
+    <div class="insight-body">Variable sleep/wake times mean you're often sleeping at the wrong phase of your body clock, reducing deep and REM sleep.</div>
+  </div>
+  <div class="insight-box purple" style="margin-bottom:20px;">
+    <div class="insight-title">Racing thoughts → cortisol → shallow sleep</div>
+    <div class="insight-body">Stress keeps cortisol elevated. High cortisol at bedtime reduces REM and deep sleep — you cycle in light sleep all night.</div>
+  </div>
+
+  <p class="section-label">Evening wind-down routine</p>
+  <div class="card" style="padding-bottom:4px;">
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-left">9:00 pm</div>
+        <div class="tl-mid"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content"><div class="tl-title">Hard screen cutoff</div><div class="tl-desc">Phone + laptop away. Switch to dim warm light. Non-negotiable for deep sleep.</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left">9:15</div>
+        <div class="tl-mid"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content"><div class="tl-title">Brain dump (5 min)</div><div class="tl-desc">Write tomorrow's tasks + looping thoughts. Gets worries out of your head and onto paper.</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left">9:30</div>
+        <div class="tl-mid"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content"><div class="tl-title">Cool the room</div><div class="tl-desc">Set AC/fan to 18–20°C. Body temperature drop triggers melatonin release.</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left">9:45</div>
+        <div class="tl-mid"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content"><div class="tl-title">Calm activity (30 min)</div><div class="tl-desc">Physical book, gentle stretching, or light meditation. Low stimulation only.</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left">10:15</div>
+        <div class="tl-mid"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content"><div class="tl-title">4-7-8 breathing (3 min)</div><div class="tl-desc">Inhale 4s → hold 7s → exhale 8s. Activates parasympathetic system, directly lowers cortisol.</div></div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left">10:30</div>
+        <div class="tl-mid"><div class="tl-dot muted"></div></div>
+        <div class="tl-content" style="padding-bottom:4px;"><div class="tl-title accent">Lights out — same time every night</div><div class="tl-desc">Consistency matters more than duration. Same time ±20 min resets your circadian rhythm within ~2 weeks.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label" style="margin-top:16px;">Tonight's habit checklist</p>
+  <div class="card" style="padding-top:6px; padding-bottom:6px;">
+    <div id="checklist"></div>
+  </div>
+  <p class="progress-label" id="progress-label">Check off habits as you go — score updates live</p>
+  <button class="reset-btn" onclick="resetAll()">Reset for tonight</button>
+
+  <footer>Sleep Tracker · Built with Claude</footer>
+</div>
+
+<script>
+  const STORAGE_KEY = 'sleep_tracker_v1';
+  const habits = [
+    { label: "No screens after 9 pm",              sub: "Prevents melatonin suppression",       tag: "screen"   },
+    { label: "Same bedtime as yesterday",           sub: "±20 min counts as consistent",         tag: "schedule" },
+    { label: "Same wake time tomorrow (alarm set)", sub: "Anchors your circadian rhythm",        tag: "schedule" },
+    { label: "Room temperature below 20°C",         sub: "Triggers natural melatonin release",   tag: "quality"  },
+    { label: "Brain dump written out",              sub: "Off your head, onto paper",             tag: "stress"   },
+    { label: "No caffeine after 2 pm",              sub: "Half-life ~6 hrs — stays in system",   tag: "quality"  },
+    { label: "4-7-8 breathing done (3 rounds)",     sub: "Directly lowers cortisol",             tag: "stress"   },
+    { label: "No heavy meal in last 2 hrs",         sub: "Digestion interrupts deep sleep",      tag: "quality"  },
+    { label: "Bedroom dark and quiet",              sub: "Even small light reduces sleep depth", tag: "quality"  },
+  ];
+  const tagColor = { screen:"tag-screen", schedule:"tag-schedule", quality:"tag-quality", stress:"tag-stress" };
+  const tagLabel = { screen:"Screen", schedule:"Schedule", quality:"Quality", stress:"Stress" };
+
+  function today() { return new Date().toISOString().slice(0,10); }
+  function loadState() {
+    try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (s && s.date===today() && Array.isArray(s.checked)) return s.checked; } catch(e) {}
+    return new Array(habits.length).fill(false);
+  }
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today(), checked })); }
+
+  let checked = loadState();
+
+  function render() {
+    document.getElementById('checklist').innerHTML = habits.map((h,i) => `
+      <div class="checklist-item" onclick="toggle(${i})">
+        <div class="check-box ${checked[i]?'done':''}"><div class="check-tick"></div></div>
+        <div>
+          <div class="check-label ${checked[i]?'done':''}">${h.label}<span class="tag ${tagColor[h.tag]}">${tagLabel[h.tag]}</span></div>
+          <div class="check-sub">${h.sub}</div>
+        </div>
+      </div>`).join('');
+    const done = checked.filter(Boolean).length;
+    const pct  = Math.round(done / habits.length * 100);
+    document.getElementById('score-val').textContent = pct + '%';
+    document.getElementById('done-val').textContent  = done + ' / ' + habits.length;
+    document.getElementById('progress-label').textContent =
+      done === habits.length ? 'All habits done — great night ahead!' :
+      done > 5 ? 'Solid routine — keep it up' :
+      done > 2 ? 'Building momentum — keep going' :
+      'Check off habits as you go — score updates live';
+  }
+
+  window.toggle   = i  => { checked[i] = !checked[i]; saveState(); render(); };
+  window.resetAll = () => { checked = new Array(habits.length).fill(false); saveState(); render(); };
+  render();
+</script>
+</body>
+</html>
